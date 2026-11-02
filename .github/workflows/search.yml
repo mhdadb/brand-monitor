@@ -6,20 +6,42 @@ on:
 jobs:
   search:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with: { node-version: 22 }
+      - name: Restore seen-URLs cache
+        uses: actions/cache/restore@v4
+        with:
+          path: cache
+          key: seen-${{ github.run_id }}
+          restore-keys: seen-
       - name: Start SearXNG
         run: |
           sed -i "s/will-be-replaced/$(openssl rand -hex 32)/" searxng/settings.yml
           chmod -R 777 searxng
           docker run -d --name searxng -p 8080:8080 -v "$PWD/searxng:/etc/searxng" searxng/searxng:latest
           for i in $(seq 1 30); do curl -sf http://localhost:8080/healthz && break; sleep 3; done
-      - name: Search
+      - name: Search, filter, classify
         run: node search.js
         env:
           N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
           SERPER_KEY: ${{ secrets.SERPER_KEY }}
+          LLM_KEY: ${{ secrets.LLM_KEY }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          TG_CHANNELS: ${{ vars.TG_CHANNELS }}
+      - name: Save seen-URLs cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: cache
+          key: seen-${{ github.run_id }}
+      - name: Keep results (if n8n failed)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results
+          path: results.json
+          retention-days: 7
