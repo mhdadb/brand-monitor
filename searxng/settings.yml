@@ -1,0 +1,39 @@
+use_default_settings: true
+server:
+  secret_key: "will-be-replaced"
+  bind_address: "0.0.0.0"
+  port: 8080
+  limiter: false
+  image_proxy: false
+search:
+  safe_search: 0
+  formats: [html, json]
+outgoing:
+  request_timeout: 6.0
+  max_request_timeout: 15.0
+  pool_connections: 100
+engines:
+  - name: google
+    disabled: false
+  - name: bing
+    disabled: false
+  - name: duckduckgo
+    disabled: false
+  - name: brave
+    disabled: false
+  - name: yahoo
+    disabled: false
+  - name: startpage
+    disabled: false
+  - name: mojeek
+    disabled: false
+  - name: qwant
+    disabled: false
+  - name: google news
+    disabled: false
+  - name: bing news
+    disabled: false
+  - name: youtube
+    disabled: false
+  - name: reddit
+    disabled: false

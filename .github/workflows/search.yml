@@ -1,0 +1,25 @@
+name: brand-monitor
+on:
+  schedule:
+    - cron: '30 5 * * *'   # 09:00 Tehran
+  workflow_dispatch: {}
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Start SearXNG
+        run: |
+          sed -i "s/will-be-replaced/$(openssl rand -hex 32)/" searxng/settings.yml
+          chmod -R 777 searxng
+          docker run -d --name searxng -p 8080:8080 -v "$PWD/searxng:/etc/searxng" searxng/searxng:latest
+          for i in $(seq 1 30); do curl -sf http://localhost:8080/healthz && break; sleep 3; done
+      - name: Search
+        run: node search.js
+        env:
+          N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          SERPER_KEY: ${{ secrets.SERPER_KEY }}
